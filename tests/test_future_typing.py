@@ -33,6 +33,7 @@ class C:
 
 def f(a: list[int] | dict[str, str], e: Literal['err'] | None = None) -> type[C]:
     x: set[str] = set()
+    y: frozenset[str] = frozenset(['y1', 'y2'])
     return C
 """
 
@@ -50,6 +51,7 @@ def test_decode_3_10():
         "\n"
         "def f (a :list [int ]|dict [str ,str ],e :Literal ['err']|None =None )->type [C ]:\n"
         "    x :set [str ]=set ()\n"
+        "    y :frozenset [str ]=frozenset (['y1','y2'])\n"
         "    return C \n"
     )
 
@@ -71,6 +73,7 @@ def test_3_9():
         "\n"
         "def f (a :typing___.Union [list [int ],dict [str ,str ]],e :typing___.Union [Literal ['err'],None ]=None )->type [C ]:\n"
         "    x :set [str ]=set ()\n"
+        "    y :frozenset [str ]=frozenset (['y1','y2'])\n"
         "    return C \n"
     )
     assert get_origin(list[str]) is list
@@ -91,6 +94,7 @@ def test_decode_3_6_to_8():
         "\n"
         "def f (a :typing___.Union [typing___.List [int ],typing___.Dict [str ,str ]],e :typing___.Union [Literal ['err'],None ]=None )->typing___.Type [C ]:\n"
         "    x :typing___.Set [str ]=set ()\n"
+        "    y :typing___.FrozenSet [str ]=frozenset (['y1','y2'])\n"
         "    return C \n"
     )
 

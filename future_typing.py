@@ -30,6 +30,7 @@ elif sys.version_info[:2] <= (3, 8):
 NEW_UNION = {"|": ","}
 NEW_GENERICS = {
     "dict": f"{TYPING_NAME}.Dict",
+    "frozenset": f"{TYPING_NAME}.FrozenSet",
     "list": f"{TYPING_NAME}.List",
     "set": f"{TYPING_NAME}.Set",
     "tuple": f"{TYPING_NAME}.Tuple",
