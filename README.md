@@ -44,14 +44,17 @@ def f(a: list[str] | dict[str, str], b: Literal['pika'] | None = None) -> type[C
 f(['a', 'b'], 'pika')
 ```
 
-```
-▶ python3.8 pika.py
+```console
+$ python3.8 pika.py
 it works! a: ['a', 'b'], b: 'pika'
+
+$ mypy pika.py
+Success: no issues found in 1 source file
 ```
 
 ## See transformed source
-```
-▶ python future_typing.py pika.py
+```console
+$ python3.8 future_typing.py pika.py
 # -*- coding: utf-8 -*-
 import typing as typing___
 from typing import Literal
