@@ -34,10 +34,10 @@ class C:
         return t
 
 
-def f(a: list[str] | dict[str, str], b: Literal['pika'] | None = None) -> type[C]:
+def f(a: list[str] | dict[str, object], b: Literal['pika'] | None = None) -> type[C]:
     x: set[str] = set(a)
     y: frozenset[str] = frozenset(['y1', 'y2'])
-    t: tuple[int, ...] = (1, 2)
+    t: tuple[int, int] = (1, 2)
     print(f'it works! a: {a!r}, b: {b!r}')
     return C
 
