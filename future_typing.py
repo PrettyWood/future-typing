@@ -2,7 +2,7 @@ import codecs
 import encodings
 import io
 import sys
-from typing import List, Tuple
+from typing import List, Sequence, Tuple
 from tokenize import (
     cookie_re,
     tokenize,
@@ -37,55 +37,90 @@ NEW_GENERICS = {
     "type": f"{TYPING_NAME}.Type",
 }
 
+Token = Tuple[int, str]
 
-def transform_tokens(tokens: List[Tuple[int, str]]) -> List[Tuple[int, str]]:
-    """
-    Transform a list of [(NAME, 'list'), (OP, '['), (NAME, 'str'), (OP, ']')]
-    into [(NAME, 'typing.List'), (OP, '|'), (NAME, 'str')
-    """
-    if not (should_transform_union or should_transform_generics):
+
+def _to_generic(token: Token) -> Token:
+    tp, val = token
+    if tp == NAME and val in NEW_GENERICS:
+        return tp, NEW_GENERICS[val]
+    else:
+        return token
+
+
+def transform_generics(tokens: List[Token]) -> List[Token]:
+    for i, token in enumerate(tokens[:-1]):
+        next_tp, next_val = tokens[i+1]
+        if next_tp == OP and next_val == "[":
+            tokens[i] = _to_generic(token)
+
+    return tokens
+
+
+def _is_new_union(tokens: Sequence[Token]) -> bool:
+    has_union = False
+
+    for tp, val in tokens:
+        if tp not in (NAME, OP, STRING):
+            return False
+        if tp == OP and val == "|":
+            has_union = True
+
+    return has_union
+
+
+def _to_old_union(left: Sequence[Token], right: Sequence[Token], union_name: str) -> List[Token]:
+    return [
+        (NAME, union_name),
+        (OP, "["),
+        *left,
+        (OP, ","),
+        *right,
+        (OP, "]")
+    ]
+
+
+def transform_union(tokens: List[Token], *, union_name=f"{TYPING_NAME}.Union") -> List[Token]:
+    """Change `|` into `Union` recursively"""
+    if not _is_new_union(tokens):
         return tokens
 
-    has_union = False
-    union_chunks: List[List[Tuple[int, str]]] = []
+    last_open_bracket, last_closed_bracket, brackets = None, None, 0
+    chunks: List[List[Token]] = []
 
-    current_chunk: List[Tuple[int, str]] = []
+    union_i = None
+    chunk: List[Token] = []
+
     for i, (tp, val) in enumerate(tokens):
-        if should_transform_generics and tp == NAME and val in NEW_GENERICS:
-            try:
-                next_tp, next_val = tokens[i + 1]
-                if next_tp == OP and next_val == "[":
-                    current_chunk.append((tp, NEW_GENERICS[val]))
-                else:
-                    current_chunk.append((tp, val))
-            except IndexError:
-                current_chunk.append((tp, val))
-        elif tp == OP and val == "|":
-            has_union = True
-            union_chunks.append(current_chunk)
-            current_chunk = []
-        else:
-            current_chunk.append((tp, val))
+        if tp == OP and val == "[":
+            brackets += 1
+            chunk.append((tp, val))
+            chunks.append(chunk)
+            chunk = []
+            continue
+        elif tp == OP and val == "]":
+            brackets -= 1
+            chunks.append(chunk)
+            chunk = [(tp, val)]
+            continue
+        elif val == "|" and not brackets:
+            union_i = i
 
-    if current_chunk:
-        union_chunks.append(current_chunk)
+        chunk.append((tp, val))
 
-    if has_union:
-        new_tokens = [
-            (NAME, f"{TYPING_NAME}.Union"),
-            (OP, "["),
-        ]
-        for chunk in union_chunks[:-1]:
-            new_tokens.extend(chunk)
-            new_tokens.append((OP, ","))
-        new_tokens.extend(union_chunks[-1])
-        new_tokens.append((OP, "]"))
-        return new_tokens
+    chunks.append(chunk)
+
+    if union_i is not None:
+        return _to_old_union(
+            transform_union(tokens[:union_i], union_name=union_name),
+            transform_union(tokens[union_i + 1:], union_name=union_name),
+            union_name,
+        )
     else:
-        return [token for chunk in union_chunks for token in chunk]
+        return [token for chunk in chunks for token in transform_union(chunk, union_name=union_name)]
 
 
-def _is_in_generic(tp: int, val: str, tokens: List[Tuple[int, str]]) -> bool:
+def _is_in_generic(tp: int, val: str, tokens: List[Token]) -> bool:
     if tp == OP and val in "|[]":
         return True
 
@@ -99,6 +134,18 @@ def _is_in_generic(tp: int, val: str, tokens: List[Tuple[int, str]]) -> bool:
         return o > c
 
     return False
+
+
+def transform_tokens(tokens: List[Token]) -> List[Token]:
+    if all(tp == NAME for tp, _ in tokens):
+        return tokens
+
+    if should_transform_generics:
+        tokens = transform_generics(tokens)
+    if should_transform_union:
+        tokens = transform_union(tokens)
+
+    return tokens
 
 
 def decode(content: bytes, errors: str = "strict") -> Tuple[str, int]:
@@ -127,8 +174,8 @@ def decode(content: bytes, errors: str = "strict") -> Tuple[str, int]:
     content = b"".join(lines)
 
     g = tokenize(io.BytesIO(content).readline)
-    result: List[Tuple[int, str]] = []
-    tokens_to_change: List[Tuple[int, str]] = []
+    result: List[Token] = []
+    tokens_to_change: List[Token] = []
 
     for tp, val, *_ in g:
         if tp == NAME or _is_in_generic(tp, val, tokens_to_change):

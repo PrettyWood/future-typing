@@ -1,6 +1,8 @@
 # -*- coding: future_typing -*-
+import io
 import sys
 import typing
+from tokenize import generate_tokens, NAME, OP, STRING
 
 import pytest
 
@@ -22,6 +24,27 @@ except AttributeError:
 
         origin = getattr(tp, "__origin__", None)
         return typing_to_builtin_map.get(origin, origin)
+
+
+@pytest.mark.parametrize(
+    "input_,output_",
+    [
+        ("str", "str"),
+        ("list[str]", "list[str]"),
+        ("str|int", "Union[str,int]"),
+        ("str|int|float", "Union[Union[str,int],float]"),
+        ("list[str|int|float]", "list[Union[Union[str,int],float]]"),
+        ("dict[str,int]|float", "Union[dict[str,int],float]"),
+        ("list[int | float]", "list[Union[int,float]]"),
+        ("Literal['err']|None", "Union[Literal['err'],None]")
+    ],
+)
+def test_transform_union(input_, output_):
+    all_tokens = generate_tokens(io.StringIO(input_).readline)
+    tokens = [(t.type, t.string) for t in all_tokens if t.type in (NAME, OP, STRING)]
+    new_tokens = future_typing.transform_union(tokens, union_name="Union")
+    new_output = "".join(v for _, v in new_tokens)
+    assert new_output == output_
 
 
 input = b"""\

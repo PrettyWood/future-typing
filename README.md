@@ -34,15 +34,15 @@ class C:
         return t
 
 
-def f(a: list[str] | dict[str, object], b: Literal['pika'] | None = None) -> type[C]:
-    x: set[str] = set(a)
+def f(a: list[str | int] | dict[str, str], b: Literal['pika'] | None = None) -> type[C]:
+    x: set[str | int] = set(a)
     y: frozenset[str] = frozenset(['y1', 'y2'])
-    t: tuple[int, int] = (1, 2)
+    t: tuple[int, ...] = (1, 2)
     print(f'it works! a: {a!r}, b: {b!r}')
     return C
 
 
-f(['a', 'b'], 'pika')
+f(['a', 'b', 1], 'pika')
 ```
 
 ```console
@@ -67,12 +67,13 @@ class C :
         return t
 
 
-def f (a :typing___.Union [typing___.List [str ],typing___.Dict [str ,str ]],b :typing___.Union [Literal ['pika'],None ]=None )->typing___.Type [C ]:
-    x :typing___.Set [str ]=set (a )
+def f (a :typing___.Union [typing___.List [typing___.Union [str ,int ]],typing___.Dict [str ,str ]],b :typing___.Union [Literal ['pika'],None ]=None )->typing___.Type [C ]:
+    x :typing___.Set [typing___.Union [str ,int ]]=set (a )
+    y :typing___.FrozenSet [str ]=frozenset (['y1','y2'])
     t :typing___.Tuple [int ,...]=(1 ,2 )
     print (f'it works! a: {a!r}, b: {b!r}')
     return C
 
 
-f (['a','b'],'pika')
+f (['a','b',1 ],'pika')
 ```
