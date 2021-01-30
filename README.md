@@ -55,7 +55,7 @@ Success: no issues found in 1 source file
 
 ## See transformed source
 ```console
-$ python3.8 future_typing.py pika.py
+$ python3.8 -m future_typing pika.py
 # -*- coding: utf-8 -*-
 import typing as typing___
 from typing import Literal
