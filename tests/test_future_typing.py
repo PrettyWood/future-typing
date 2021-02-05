@@ -2,7 +2,7 @@
 import io
 import sys
 import typing
-from tokenize import generate_tokens, NAME, OP, STRING
+from tokenize import generate_tokens, NAME, NUMBER, OP, STRING
 
 import pytest
 
@@ -36,12 +36,13 @@ except AttributeError:
         ("list[str|int|float]", "list[Union[Union[str,int],float]]"),
         ("dict[str,int]|float", "Union[dict[str,int],float]"),
         ("list[int | float]", "list[Union[int,float]]"),
-        ("Literal['err']|None", "Union[Literal['err'],None]")
+        ("Literal['err']|None", "Union[Literal['err'],None]"),
+        ("create(A, x=1, y='a') | None", "Union[create(A,x=1,y='a'),None]"),
     ],
 )
 def test_transform_union(input_, output_):
     all_tokens = generate_tokens(io.StringIO(input_).readline)
-    tokens = [(t.type, t.string) for t in all_tokens if t.type in (NAME, OP, STRING)]
+    tokens = [(t.type, t.string) for t in all_tokens if t.type in (NAME, NUMBER, OP, STRING)]
     new_tokens = future_typing.transform_union(tokens, union_name="Union")
     new_output = "".join(v for _, v in new_tokens)
     assert new_output == output_

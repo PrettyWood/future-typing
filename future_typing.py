@@ -8,6 +8,7 @@ from tokenize import (
     tokenize,
     untokenize,
     NAME,
+    NUMBER,
     OP,
     STRING,
 )
@@ -61,7 +62,7 @@ def _is_new_union(tokens: Sequence[Token]) -> bool:
     has_union = False
 
     for tp, val in tokens:
-        if tp not in (NAME, OP, STRING):
+        if tp not in (NAME, NUMBER, OP, STRING):
             return False
         if tp == OP and val == "|":
             has_union = True
@@ -178,7 +179,7 @@ def decode(content: bytes, errors: str = "strict") -> Tuple[str, int]:
     tokens_to_change: List[Token] = []
 
     for tp, val, *_ in g:
-        if tp == NAME or _is_in_generic(tp, val, tokens_to_change):
+        if tp in (NUMBER, NAME, STRING) or _is_in_generic(tp, val, tokens_to_change):
             tokens_to_change.append((tp, val))
         else:
             result.extend(transform_tokens(tokens_to_change))
