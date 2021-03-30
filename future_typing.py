@@ -5,6 +5,7 @@ import sys
 from typing import List, Sequence, Tuple
 from tokenize import (
     cookie_re,
+    generate_tokens,
     tokenize,
     untokenize,
     NAME,
@@ -91,6 +92,14 @@ def transform_union(tokens: List[Token], *, union_name=f"{TYPING_NAME}.Union") -
 
     union_i = None
     chunk: List[Token] = []
+
+    for i, (tp, val) in enumerate(tokens):
+        if (tp, val) == (NAME, "Annotated"):
+            for j, (t, val) in enumerate(tokens[i:]):
+                if t == OP and val == ",":
+                    first_comma_index = i + j
+                    new_annotated = transform_union(tokens[i+2:first_comma_index])
+                    return [*tokens[:i+2], *new_annotated, *tokens[first_comma_index:]]
 
     for i, (tp, val) in enumerate(tokens):
         if tp == OP and val == "[":
@@ -188,6 +197,15 @@ def decode(content: bytes, errors: str = "strict") -> Tuple[str, int]:
 
     res = untokenize(result).decode("utf-8", errors)
     return res, len(content)
+
+
+def transform_annotation(annotation: str) -> str:
+    all_tokens = generate_tokens(io.StringIO(annotation).readline)
+    tokens = [
+        (t.type, t.string) for t in all_tokens if t.type in (NAME, NUMBER, OP, STRING)
+    ]
+    new_tokens = transform_tokens(tokens)
+    return "".join(v for _, v in new_tokens)
 
 
 class IncrementalDecoder(codecs.BufferedIncrementalDecoder):
