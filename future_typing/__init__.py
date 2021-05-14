@@ -1,3 +1,3 @@
 # flake8: noqa
-from .codec import decode, register
+from .codec import register
 from .utils import transform_annotation
