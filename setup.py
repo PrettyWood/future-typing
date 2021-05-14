@@ -80,5 +80,19 @@ setup(
     packages=["future_typing"],
     package_data={"future_typing": ["py.typed"]},
     python_requires=">=3.6",
+    extras_require={
+        "test": [
+            "black == 21.5b1",
+            "flake8 == 3.9.2",
+            "isort == 5.8.0",
+            "mypy == 0.812",
+            "pytest == 6.2.4",
+            "pytest-cov == 2.11.1",
+            "typing_extensions == 3.10.0.0",
+        ],
+        "dev": [
+            "pre-commit == 2.12.1"
+        ],
+    },
     zip_safe=True,
 )

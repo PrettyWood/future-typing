@@ -8,8 +8,11 @@ all: lint test
 .PHONY: install
 install:
 	pip install -U pip
-	pip install -r requirements-dev.txt
-	pip install .
+	pip install .[test]
+
+.PHONY: install-dev
+install-dev: install
+	pip install .[dev]
 	pre-commit install
 
 .PHONY: test

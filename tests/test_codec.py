@@ -7,7 +7,11 @@ import pytest
 from future_typing.codec import decode
 
 input = b"""\
-from typing import Literal
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
+
 
 class C:
     l: list[int|str] = [1, 'q']
