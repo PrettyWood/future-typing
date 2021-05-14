@@ -74,6 +74,9 @@ setup(
     url="https://github.com/PrettyWood/future-typing",
     license="MIT",
     cmdclass={"install": install},
+    entry_points={
+        "console_scripts": ['future_typing=future_typing.cli:cli'],
+    },
     packages=["future_typing"],
     package_data={"future_typing": ["py.typed"]},
     python_requires=">=3.6",

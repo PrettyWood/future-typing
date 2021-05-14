@@ -11,23 +11,28 @@ def transform_annotation(annotation: str, typing_module_name: str = "typing") ->
     if sys.version_info >= (3, 10):
         return annotation
 
-    all_tokens = generate_tokens(io.StringIO(annotation).readline)
-    tokens = [
-        (t.type, t.string) for t in all_tokens if t.type in (NAME, NUMBER, OP, STRING)
-    ]
-    new_tokens = _transform_tokens(tokens, typing_module_name)
+    tokens = get_tokens_from_string(annotation)
+    new_tokens = transform_tokens(tokens, typing_module_name)
     return "".join(v for _, v in new_tokens)
 
 
-def _transform_tokens(tokens: List[Token], typing_module_name: str) -> List[Token]:
+def get_tokens_from_string(string: str) -> List[Token]:
+    all_tokens = generate_tokens(io.StringIO(string).readline)
+    return [
+        (t.type, t.string) for t in all_tokens if t.type in (NAME, NUMBER, OP, STRING)
+    ]
+
+
+def transform_tokens(tokens: List[Token], typing_module_name: str) -> List[Token]:
     if all(tp == NAME for tp, _ in tokens):
         return tokens
 
-    new_tokens = _transform_union(tokens, typing_module_name)
+    if sys.version_info < (3, 10):
+        tokens = _transform_union(tokens, typing_module_name)
     if sys.version_info < (3, 9):
-        new_tokens = _transform_generics(tokens, typing_module_name)
+        tokens = _transform_generics(tokens, typing_module_name)
 
-    return new_tokens
+    return tokens
 
 
 def _transform_union(tokens: List[Token], typing_module_name: str) -> List[Token]:

@@ -2,7 +2,33 @@ import sys
 
 import pytest
 
-from future_typing.utils import transform_annotation
+from future_typing.utils import (
+    _transform_union,
+    get_tokens_from_string,
+    transform_annotation,
+)
+
+
+@pytest.mark.parametrize(
+    "input_,output_",
+    [
+        ("str", "str"),
+        ("list[str]", "list[str]"),
+        ("str|int", "T.Union[str,int]"),
+        ("str|int|float", "T.Union[T.Union[str,int],float]"),
+        ("list[str|int|float]", "list[T.Union[T.Union[str,int],float]]"),
+        ("dict[str,int]|float", "T.Union[dict[str,int],float]"),
+        ("list[int | float]", "list[T.Union[int,float]]"),
+        ("Literal['err']|None", "T.Union[Literal['err'],None]"),
+        ("create(A, x=1, y='a') | None", "T.Union[create(A,x=1,y='a'),None]"),
+    ],
+)
+def test_transform_union(input_, output_):
+    tokens = get_tokens_from_string(input_)
+    new_tokens = _transform_union(tokens, typing_module_name="T")
+    new_output = "".join(v for _, v in new_tokens)
+    assert new_output == output_
+
 
 TYPING_MOD = "typing___"
 CASES = {

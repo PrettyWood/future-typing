@@ -9,7 +9,7 @@ all: lint test
 install:
 	pip install -U pip
 	pip install -r requirements-dev.txt
-	pip install -e .
+	pip install .
 	pre-commit install
 
 .PHONY: test
