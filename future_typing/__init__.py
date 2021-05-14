@@ -2,17 +2,17 @@ import codecs
 import encodings
 import io
 import sys
-from typing import List, Sequence, Tuple
 from tokenize import (
-    cookie_re,
-    generate_tokens,
-    tokenize,
-    untokenize,
     NAME,
     NUMBER,
     OP,
     STRING,
+    cookie_re,
+    generate_tokens,
+    tokenize,
+    untokenize,
 )
+from typing import Any, List, Sequence, Tuple
 
 utf_8 = encodings.search_function("utf8")
 
@@ -52,7 +52,7 @@ def _to_generic(token: Token) -> Token:
 
 def transform_generics(tokens: List[Token]) -> List[Token]:
     for i, token in enumerate(tokens[:-1]):
-        next_tp, next_val = tokens[i+1]
+        next_tp, next_val = tokens[i + 1]
         if next_tp == OP and next_val == "[":
             tokens[i] = _to_generic(token)
 
@@ -71,23 +71,20 @@ def _is_new_union(tokens: Sequence[Token]) -> bool:
     return has_union
 
 
-def _to_old_union(left: Sequence[Token], right: Sequence[Token], union_name: str) -> List[Token]:
-    return [
-        (NAME, union_name),
-        (OP, "["),
-        *left,
-        (OP, ","),
-        *right,
-        (OP, "]")
-    ]
+def _to_old_union(
+    left: Sequence[Token], right: Sequence[Token], union_name: str
+) -> List[Token]:
+    return [(NAME, union_name), (OP, "["), *left, (OP, ","), *right, (OP, "]")]
 
 
-def transform_union(tokens: List[Token], *, union_name=f"{TYPING_NAME}.Union") -> List[Token]:
+def transform_union(
+    tokens: List[Token], *, union_name: str = f"{TYPING_NAME}.Union"
+) -> List[Token]:
     """Change `|` into `Union` recursively"""
     if not _is_new_union(tokens):
         return tokens
 
-    last_open_bracket, last_closed_bracket, brackets = None, None, 0
+    brackets = 0
     chunks: List[List[Token]] = []
 
     union_i = None
@@ -98,8 +95,12 @@ def transform_union(tokens: List[Token], *, union_name=f"{TYPING_NAME}.Union") -
             for j, (t, val) in enumerate(tokens[i:]):
                 if t == OP and val == ",":
                     first_comma_index = i + j
-                    new_annotated = transform_union(tokens[i+2:first_comma_index])
-                    return [*tokens[:i+2], *new_annotated, *tokens[first_comma_index:]]
+                    new_annotated = transform_union(tokens[i + 2 : first_comma_index])
+                    return [
+                        *tokens[: i + 2],
+                        *new_annotated,
+                        *tokens[first_comma_index:],
+                    ]
 
     for i, (tp, val) in enumerate(tokens):
         if tp == OP and val == "[":
@@ -123,11 +124,15 @@ def transform_union(tokens: List[Token], *, union_name=f"{TYPING_NAME}.Union") -
     if union_i is not None:
         return _to_old_union(
             transform_union(tokens[:union_i], union_name=union_name),
-            transform_union(tokens[union_i + 1:], union_name=union_name),
+            transform_union(tokens[union_i + 1 :], union_name=union_name),
             union_name,
         )
     else:
-        return [token for chunk in chunks for token in transform_union(chunk, union_name=union_name)]
+        return [
+            token
+            for chunk in chunks
+            for token in transform_union(chunk, union_name=union_name)
+        ]
 
 
 def _is_in_generic(tp: int, val: str, tokens: List[Token]) -> bool:
@@ -216,10 +221,10 @@ class IncrementalDecoder(codecs.BufferedIncrementalDecoder):
         return decode(input, errors)
 
 
-def search_function(_) -> codecs.CodecInfo:
+def search_function(_: Any) -> codecs.CodecInfo:
     return codecs.CodecInfo(
         encode=utf_8.encode,
-        decode=decode,
+        decode=decode,  # type: ignore[arg-type]
         streamreader=utf_8.streamreader,
         streamwriter=utf_8.streamwriter,
         incrementalencoder=utf_8.incrementalencoder,

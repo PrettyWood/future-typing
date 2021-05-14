@@ -4,24 +4,27 @@ import os.path
 from setuptools import setup
 from setuptools.command.install import install as _install
 
+PTH = """\
+try:
+    import future_typing
+except ImportError:
+    pass
+else:
+    future_typing.register()
+"""
 
-PTH = (
-    'try:\n'
-    '    import future_typing\n'
-    'except ImportError:\n'
-    '    pass\n'
-    'else:\n'
-    '    future_typing.register()\n'
-)
+THIS_DIR = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(THIS_DIR, "README.md")) as f:
+    long_description = f.read()
 
 
 class install(_install):
     def initialize_options(self):
         _install.initialize_options(self)
         # Use this prefix to get loaded as early as possible
-        name = 'aaaaaaa_' + self.distribution.metadata.name
+        name = "aaaaaaa_" + self.distribution.metadata.name
 
-        contents = 'import sys; exec({!r})\n'.format(PTH)
+        contents = "import sys; exec({!r})\n".format(PTH)
         self.extra_path = (name, contents)
 
     def finalize_options(self):
@@ -30,8 +33,8 @@ class install(_install):
         install_suffix = os.path.relpath(
             self.install_lib, self.install_libbase,
         )
-        if install_suffix == '.':
-            distutils.log.info('skipping install of .pth during easy-install')
+        if install_suffix == ".":
+            distutils.log.info("skipping install of .pth during easy-install")
         elif install_suffix == self.extra_path[1]:
             self.install_lib = self.install_libbase
             distutils.log.info(
@@ -40,9 +43,39 @@ class install(_install):
             )
         else:
             raise AssertionError(
-                'unexpected install_suffix',
+                "unexpected install_suffix",
                 self.install_lib, self.install_libbase, install_suffix,
             )
 
 
-setup(cmdclass={'install': install})
+setup(
+    name="future_typing",
+    version="0.4.0",
+    description="Use generic type hints and new union syntax `|` with python 3.6+",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "Operating System :: OS Independent",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Typing :: Typed",
+    ],
+    author="Eric Jolibois",
+    author_email="em.jolibois@gmail.com",
+    url="https://github.com/PrettyWood/future-typing",
+    license="MIT",
+    cmdclass={"install": install},
+    packages=["future_typing"],
+    package_data={"future_typing": ["py.typed"]},
+    python_requires=">=3.6",
+    zip_safe=True,
+)
