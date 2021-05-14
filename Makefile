@@ -8,16 +8,17 @@ all: lint test
 .PHONY: install
 install:
 	pip install -U pip
-	pip install .[test]
+	pip install -e .[test]
 
 .PHONY: install-dev
 install-dev: install
-	pip install .[dev]
+	pip install -e .[dev]
 	pre-commit install
 
 .PHONY: test
 test:
-	pytest --cov future_typing --cov-report=term-missing --cov-report=xml
+	pytest --cov future_typing --cov-report=term-missing --cov-report=xml\
+           --ignore tests/test_future_typing.py
 
 .PHONY: format
 format:
