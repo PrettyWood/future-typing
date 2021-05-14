@@ -38,7 +38,7 @@ build:
 
 .PHONY: upload
 upload:
-	wine upload dist/*
+	twine upload dist/*
 
 .PHONY: clean
 clean:
