@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from future_typing import transform_annotation
+from future_typing.utils import transform_annotation
 
 TYPING_MOD = "typing___"
 CASES = {
@@ -59,10 +59,10 @@ CASES = {
     "in_str,out_str", ((k, v["3.6-3.8"]) for k, v in CASES.items())
 )
 def test_transform_annotation_3_6_to_8(in_str, out_str):
-    assert transform_annotation(in_str) == out_str
+    assert transform_annotation(in_str, TYPING_MOD) == out_str
 
 
 @pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="3.9")
 @pytest.mark.parametrize("in_str,out_str", ((k, v["3.9"]) for k, v in CASES.items()))
 def test_transform_annotation_3_9(in_str, out_str):
-    assert transform_annotation(in_str) == out_str
+    assert transform_annotation(in_str, TYPING_MOD) == out_str
