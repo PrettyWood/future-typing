@@ -50,7 +50,7 @@ class install(_install):
 
 setup(
     name="future_typing",
-    version="0.4.0",
+    version="0.4.1",
     description="Use generic type hints and new union syntax `|` with python 3.6+",
     long_description=long_description,
     long_description_content_type="text/markdown",
