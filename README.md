@@ -5,9 +5,22 @@
 [![versions](https://img.shields.io/pypi/pyversions/future-typing.svg)](https://github.com/PrettyWood/future-typing)
 [![license](https://img.shields.io/github/license/PrettyWood/future-typing.svg)](https://github.com/PrettyWood/future-typing/blob/master/LICENSE)
 
-Backport for type hinting generics in standard collections and union types as X | Y
+Use generic type hints and new union syntax `|` with python 3.6+
 
-_(greatly inspired by [future-annotations](https://github.com/asottile/future-annotations)!)_
+If you just want to use new annotations for type checkers like `mypy`, then do not use this library
+and simply add `from __future__ import annotations`.
+But if you want to use those annotations at runtime, then you may be at the right place!
+
+This library exposes:
+
+- `transform_annotation`, which will transform `list[str|int|float]` into
+  * `typing.List[typing.Union[str, int, float]]` for python 3.6 to 3.8
+  * `list[typing.Union[str, int, float]]` for python 3.9 (since generic types are natively supported)
+
+- a custom source code encoding `future_typing` that you can use to trigger the transformation at
+  interpretation time
+
+- a CLI to see the transformed source
 
 ## Installation
 
@@ -15,7 +28,7 @@ _(greatly inspired by [future-annotations](https://github.com/asottile/future-an
     pip install future_typing
 ```
 
-## Usage
+## Codec
 Just add this custom source code encoding at the top of your file
 ```
 # -*- coding: future_typing -*-
@@ -53,10 +66,9 @@ $ mypy pika.py
 Success: no issues found in 1 source file
 ```
 
-## See transformed source
+## CLI
 ```console
-$ python3.8 -m future_typing pika.py
-# -*- coding: utf-8 -*-
+$ future_typing pika.py
 import typing as typing___
 from typing import Literal
 
